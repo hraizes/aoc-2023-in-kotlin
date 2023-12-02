@@ -1,4 +1,9 @@
+package Day01
+
 import kotlinx.coroutines.runBlocking
+import parallelMap
+import println
+import readInput
 import kotlin.system.measureTimeMillis
 
 object Day01Solver {

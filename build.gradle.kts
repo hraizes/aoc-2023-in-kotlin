@@ -10,7 +10,7 @@ sourceSets {
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0-RC")
-    //implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.15.+")
 }
 
 tasks {
