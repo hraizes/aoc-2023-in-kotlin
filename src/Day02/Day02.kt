@@ -1,18 +1,25 @@
 package Day02
 
-import println
 import readInput
 
-data class GameConfig(
+enum class Color(val countGroupName: String, val inputName: String) {
+    RED("redCount", "red"),
+    BLUE("blueCount", "blue"),
+    GREEN("greenCount", "green")
+}
+
+class GameConfig(
     val maxRed: Int,
     val maxBlue: Int,
     val maxGreen: Int
-)
+) {
+    fun calculatePower() = maxRed * maxBlue * maxGreen
+}
 
 class Round(
-    private val redCount: Int,
-    private val blueCount: Int,
-    private val greenCount: Int
+    val redCount: Int,
+    val blueCount: Int,
+    val greenCount: Int
 ) {
     fun isRoundValid(gameConfig: GameConfig): Boolean {
         return (redCount <= gameConfig.maxRed && blueCount <= gameConfig.maxBlue && greenCount <= gameConfig.maxGreen)
@@ -21,40 +28,45 @@ class Round(
 
 class Game(
     private val id: Int,
-    private val gameConfig: GameConfig,
     private val rounds: List<Round>
 ) {
 
-    fun isValidGame(): Boolean {
+    fun isValidGame(gameConfig: GameConfig): Boolean {
         return rounds.all { round -> round.isRoundValid(gameConfig) }
     }
 
     fun getGameId() = id
+
+    fun getMinimumRequiredGameConfig(): GameConfig {
+        return GameConfig(
+            maxBlue = rounds.maxOf { it.blueCount },
+            maxRed = rounds.maxOf { it.redCount },
+            maxGreen = rounds.maxOf { it.greenCount }
+        )
+    }
+
 }
 
 object Day02Solver {
 
-    enum class Color(val countGroupName: String, val inputName: String) {
-        RED("redCount", "red"),
-        BLUE("blueCount", "blue"),
-        GREEN("greenCount", "green")
+    fun solvePart1(inputGames: List<String>): Int {
+        val gameConfig = GameConfig(maxRed = 12, maxBlue = 14, maxGreen = 13)
+        val games: List<Game> = parseGames(inputGames)
+        val validGames = games.filter { game -> game.isValidGame(gameConfig) }
+        return validGames.sumOf { it.getGameId() }
     }
 
-    private val gameIdRegex = Regex("""(Game (?<gameId>\d*))""")
-    fun solvePart1(gameConfig: GameConfig, inputGames: List<String>): Int {
-        val games: List<Game> = parseGames(gameConfig, inputGames)
-        return games.filter { game -> game.isValidGame() }.sumOf { it.getGameId() }
+    fun solvePart2(inputGames: List<String>): Int {
+        val games: List<Game> = parseGames(inputGames)
+        val minimumRequiredGameConfigs = games.map { it.getMinimumRequiredGameConfig() }
+        return minimumRequiredGameConfigs.sumOf { it.calculatePower() }
     }
 
-    private fun parseGames(gameConfig: GameConfig, inputGames: List<String>): List<Game> {
-        return inputGames.map { gameData ->
-            val gameId = gameIdRegex.find(gameData)!!.groups["gameId"]!!.value.toInt()
-            val rounds: List<String> = gameData.split(":").last().split(";")
-            Game(
-                id=gameId,
-                gameConfig=gameConfig,
-                rounds=parseRounds(rounds)
-            )
+    private fun parseGames(inputGames: List<String>): List<Game> {
+        return inputGames.map { game ->
+            val gameId = parseGameId(game)
+            val rounds: List<String> = game.split(":").last().split(";")
+            Game(id=gameId, rounds=parseRounds(rounds))
         }
     }
 
@@ -66,6 +78,10 @@ object Day02Solver {
                 greenCount = parseColorCount(Color.GREEN, round),
             )
         }
+    }
+
+    private fun parseGameId(value: String): Int {
+        return Regex("""(Game (?<gameId>\d*))""").find(value)!!.groups["gameId"]!!.value.toInt()
     }
 
     private fun parseColorCount(color: Color, value: String): Int {
@@ -80,12 +96,16 @@ object Day02Solver {
 
 fun main() {
 
-    val gameConfig = GameConfig(maxRed = 12, maxBlue = 14, maxGreen = 13)
-
     val day2ExampleInput = readInput("Day02_P1_Example")
-    check(Day02Solver.solvePart1(gameConfig, day2ExampleInput) == 8)
+    check(Day02Solver.solvePart1(day2ExampleInput) == 8)
+    check(Day02Solver.solvePart2(day2ExampleInput) == 2286)
 
     val myPersonalInput = readInput("Day02")
-    Day02Solver.solvePart1(gameConfig, myPersonalInput).println()
+
+    val part1Answer = Day02Solver.solvePart1(myPersonalInput)
+    println("Part 1: $part1Answer")
+
+    val part2Answer = Day02Solver.solvePart2(myPersonalInput)
+    println("Part 2: $part2Answer")
 
 }
